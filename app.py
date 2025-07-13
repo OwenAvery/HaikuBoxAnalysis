@@ -94,27 +94,41 @@ app.layout = html.Div([
     dcc.Graph(id='rare-bar-chart'),
 
     html.H2("Bird Activity Heatmap"),
-    dcc.Graph(id='heatmap-graph')
+    dcc.Graph(id='heatmap-graph'),
+
+    html.H2("Monthly Species Trend"),
+    html.Div([
+    html.Label("Select Species:"),
+    dcc.Dropdown(
+        id='species-dropdown',
+        multi=True,
+        placeholder="Select one or more species"
+    )
+    ], style={"margin": "20px"}),
+    dcc.Graph(id='species-trend-graph'),
 ])
 
 # =============
 # All-in-one callback
 # =============
 @app.callback(
-    Output('top-graph', 'figure'),
+   Output('top-graph', 'figure'),
     Output('rare-bar-chart', 'figure'),
     Output('rare-list', 'children'),
     Output('heatmap-graph', 'figure'),
+    Output('species-trend-graph', 'figure'),
+    Output('species-dropdown', 'options'),
     Input('upload-data', 'contents'),
     Input('score-slider', 'value'),
     Input('rarity-input', 'value'),
-    Input('month-dropdown', 'value')
+    Input('month-dropdown', 'value'),
+    State('species-dropdown', 'value')
 )
-def update_dashboard(contents, min_score, rarity_threshold, selected_month):
+def update_dashboard(contents, min_score, rarity_threshold, selected_month, selected_species):
     if contents is None:
         # Return empty graphs when no data uploaded
         empty_fig = px.bar(title="Upload a CSV file to see data")
-        return empty_fig, empty_fig, [], empty_fig
+        return empty_fig, empty_fig, [], empty_fig, empty_fig, []
 
     df = parse_contents(contents)
 
@@ -162,8 +176,21 @@ def update_dashboard(contents, min_score, rarity_threshold, selected_month):
         title="Bird Activity by Hour and Weekday"
     )
     heatmap_fig.update_layout(height=500)
+    all_species = df.groupby("Species")["Count"].sum().sort_values(ascending=False).head(10).index.tolist()
+    dropdown_options = [{"label": s, "value": s} for s in all_species]
 
-    return top_fig, rare_fig, rare_list, heatmap_fig
+    if not selected_species:
+        selected_species = all_species[:3]  # default: top 3
+
+    trend_df = df[df["Species"].isin(selected_species)].copy()
+    trend_df["Month"] = trend_df["Local Date"].dt.to_period("M").dt.to_timestamp()
+    trend_summary = trend_df.groupby(["Month", "Species"])["Count"].sum().reset_index()
+
+    trend_fig = px.line(trend_summary, x="Month", y="Count", color="Species", markers=True,
+                        title="Monthly Sightings Trend")
+
+    return top_fig, rare_fig, rare_list, heatmap_fig, trend_fig, dropdown_options
+
 
 # ============
 # Run
