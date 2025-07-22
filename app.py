@@ -3,6 +3,8 @@ import pandas as pd
 import plotly.express as px
 import base64
 import io
+import plotly.io as pio
+pio.templates.default = "plotly_dark"
 
 app = Dash()
 
@@ -42,71 +44,93 @@ def parse_contents(contents):
 # Layout
 # ============
 app.layout = html.Div([
-    html.H1("Haikubox Bird Data Viewer"),
-
-    dcc.Upload(
-        id='upload-data',
-        children=html.Button('Upload CSV'),
-        multiple=False
-    ),
-
-    html.Div([
-        html.Label("Minimum Score:"),
-        dcc.Slider(id='score-slider', min=0, max=1, step=0.05, value=0.5,
-                   marks={0: '0', 0.5: '0.5', 1: '1'})
-    ], style={"margin": "20px"}),
+    html.H1("Haikubox Bird Data Viewer", style={
+        "textAlign": "center",
+        "color": "#90c8f9",
+        "marginTop": "20px",
+        "marginBottom": "30px"
+    }),
 
     html.Div([
-        html.Label("Rarity Threshold (Max Sightings):"),
-        dcc.Input(id='rarity-input', type='number', value=10, min=1, step=1),
-    ], style={"margin": "20px"}),
+        dcc.Upload(
+            id='upload-data',
+            children=html.Button('Upload CSV', style={
+                "backgroundColor": "#b4000c",
+                "color": "white",
+                "border": "none",
+                "padding": "10px 20px",
+                "cursor": "pointer"
+            }),
+            multiple=False,
+            style={"marginRight": "20px"}
+        ),
 
-    html.Div([
-    html.Label("Select Month:"),
-    dcc.Dropdown(
-        id='month-dropdown',
-        options=[
-            {'label': 'All Months', 'value': 'All'},
-            {'label': 'January', 'value': 'January'},
-            {'label': 'February', 'value': 'February'},
-            {'label': 'March', 'value': 'March'},
-            {'label': 'April', 'value': 'April'},
-            {'label': 'May', 'value': 'May'},
-            {'label': 'June', 'value': 'June'},
-            {'label': 'July', 'value': 'July'},
-            {'label': 'August', 'value': 'August'},
-            {'label': 'September', 'value': 'September'},
-            {'label': 'October', 'value': 'October'},
-            {'label': 'November', 'value': 'November'},
-            {'label': 'December', 'value': 'December'},
-        ],
-        value='All',  # default value
-        clearable=False,
-        style={"width": "200px"}
-    )
-    ], style={"margin": "20px"}),
+        html.Div([
+            html.Label("Minimum Score:", style={"color": "white"}),
+            dcc.Slider(id='score-slider', min=0, max=1, step=0.05, value=0.5,
+                       marks={0: '0', 0.5: '0.5', 1: '1'},
+                       tooltip={"placement": "bottom", "always_visible": True})
+        ], style={"marginRight": "30px", "width": "250px"}),
 
-    html.H2("Top 20 Most Common Bird Species"),
+        html.Div([
+            html.Label("Rarity Threshold (Max Sightings):", style={"color": "white"}),
+            dcc.Input(id='rarity-input', type='number', value=10, min=1, step=1, style={"width": "100%"})
+        ], style={"marginRight": "30px", "width": "250px"}),
+
+        html.Div([
+            html.Label("Select Month:", style={"color": "white"}),
+            dcc.Dropdown(
+                id='month-dropdown',
+                options=[{'label': m, 'value': m} for m in [
+                    'All', 'January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December']],
+                value='All',
+                clearable=False,
+                style={"color": "black"}
+            )
+        ], style={"width": "200px"})
+    ], style={"display": "flex", "flexWrap": "wrap", "justifyContent": "center", "gap": "20px", "marginBottom": "30px"}),
+
+    html.H2("Top 20 Most Common Bird Species", style={"color": "white"}),
     dcc.Graph(id='top-graph'),
 
-    html.H2("Rare Species List"),
-    html.Ul(id='rare-list'),
+    html.H2("Rare Species", style={"color": "white"}),
     dcc.Graph(id='rare-bar-chart'),
+    html.H3("Rare Species List", style={"color": "white"}),
+    html.Ul(id='rare-list', style={
+    "listStyleType": "none",
+    "padding": "0",
+    "margin": "0",
+    "maxHeight": "400px",
+    "overflowY": "auto",
+    "backgroundColor": "#1e1e1e",
+    "border": "1px solid #333",
+    "borderRadius": "10px",
+    "paddingLeft": "15px",
+    "paddingTop": "10px",
+    "color": "#ffffff"
+}),
 
-    html.H2("Bird Activity Heatmap"),
+    html.H2("Bird Activity Heatmap", style={"color": "white"}),
     dcc.Graph(id='heatmap-graph'),
 
-    html.H2("Monthly Species Trend"),
+    html.H2("Monthly Species Trend", style={"color": "white"}),
     html.Div([
-    html.Label("Select Species:"),
-    dcc.Dropdown(
-        id='species-dropdown',
-        multi=True,
-        placeholder="Select one or more species"
-    )
-    ], style={"margin": "20px"}),
-    dcc.Graph(id='species-trend-graph'),
-])
+        html.Label("Select Species:", style={"color": "white"}),
+        dcc.Dropdown(
+            id='species-dropdown',
+            multi=True,
+            placeholder="Select one or more species",
+            style={"color": "black"}
+        )
+    ], style={"marginBottom": "20px", "width": "400px", "marginLeft": "auto", "marginRight": "auto"}),
+    dcc.Graph(id='species-trend-graph')
+], style={
+    "backgroundColor": "#121212",
+    "padding": "20px",
+    "fontFamily": "Arial, sans-serif"
+})
+
 
 # =============
 # All-in-one callback
@@ -141,7 +165,7 @@ def update_dashboard(contents, min_score, rarity_threshold, selected_month, sele
         print(df)
 
     if df.empty:
-        empty_fig = px.bar(title="No data for selected month")
+        empty_fig = px.bar(title="No data for selected month", template="plotly_dark")
         return empty_fig, empty_fig, [html.Li("No data available for selected month")], empty_fig
 
     # Filter by minimum score
@@ -151,16 +175,24 @@ def update_dashboard(contents, min_score, rarity_threshold, selected_month, sele
     top_counts = filtered_df.groupby("Species", as_index=False)["Count"].sum()
     top_counts = top_counts.sort_values("Count", ascending=False).head(20)
     top_fig = px.bar(top_counts, x="Count", y="Species", orientation="h",
-                     title="Top 20 Most Common Bird Species")
+                     title="Top 20 Most Common Bird Species", template="plotly_dark")
     top_fig.update_layout(yaxis=dict(categoryorder='total ascending'))
 
     # Rare species list & graph
     rare_counts = filtered_df.groupby("Species", as_index=False)["Count"].sum()
     rare_counts = rare_counts[rare_counts["Count"] <= rarity_threshold].sort_values("Count")
     rare_fig = px.bar(rare_counts, x="Count", y="Species", orientation="h",
-                      title=f"Rare Birds (Score ≥ {min_score}, Sightings ≤ {rarity_threshold})")
+                      title=f"Rare Birds (Score ≥ {min_score}, Sightings ≤ {rarity_threshold})", template="plotly_dark")
     rare_fig.update_layout(yaxis=dict(categoryorder='total ascending'), height=500)
-    rare_list = [html.Li(f"{row['Species']}: {int(row['Count'])} sightings") for _, row in rare_counts.iterrows()]
+    rare_list = [
+    html.Li(f"{row['Species']}: {int(row['Count'])} sightings", style={
+        "padding": "6px 0",
+        "borderBottom": "1px solid #333",
+        "fontFamily": "monospace",
+        "fontSize": "14px"
+    })
+    for _, row in rare_counts.iterrows()
+]
 
     # Bird activity heatmap
     df["Hour"] = df["DateTime"].dt.hour
@@ -173,7 +205,8 @@ def update_dashboard(contents, min_score, rarity_threshold, selected_month, sele
     heatmap_fig = px.density_heatmap(
         activity, x="Hour", y="Weekday", z="Count",
         color_continuous_scale="Viridis",
-        title="Bird Activity by Hour and Weekday"
+        title="Bird Activity by Hour and Weekday",
+        template="plotly_dark"
     )
     heatmap_fig.update_layout(height=500)
     all_species = df.groupby("Species")["Count"].sum().sort_values(ascending=False).head(10).index.tolist()
@@ -187,7 +220,7 @@ def update_dashboard(contents, min_score, rarity_threshold, selected_month, sele
     trend_summary = trend_df.groupby(["Month", "Species"])["Count"].sum().reset_index()
 
     trend_fig = px.line(trend_summary, x="Month", y="Count", color="Species", markers=True,
-                        title="Monthly Sightings Trend")
+                        title="Monthly Sightings Trend", template="plotly_dark")
 
     return top_fig, rare_fig, rare_list, heatmap_fig, trend_fig, dropdown_options
 
